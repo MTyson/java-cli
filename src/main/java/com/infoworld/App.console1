@@ -1,0 +1,171 @@
+package com.infoworld;
+
+import java.util.stream.Stream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import org.jline.reader.LineReader;
+import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.impl.DefaultParser;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import jline.TerminalFactory;
+
+// consoleui
+import de.codeshelf.consoleui.elements.ConfirmChoice;
+import de.codeshelf.consoleui.prompt.ConfirmResult;
+import de.codeshelf.consoleui.prompt.ConsolePrompt;
+import de.codeshelf.consoleui.prompt.PromtResultItemIF;
+import de.codeshelf.consoleui.prompt.builder.PromptBuilder;
+//import jline.console.completer.StringsCompleter;
+
+import java.io.IOException;
+import java.util.HashMap;
+
+import static org.fusesource.jansi.Ansi.ansi;
+import org.fusesource.jansi.AnsiConsole;
+
+public class App {
+  public static void main(String[] args) throws IOException {
+    Terminal terminal = TerminalBuilder.terminal();
+    LineReader reader =
+        LineReaderBuilder.builder()
+            .terminal(terminal)
+            .completer(new StringsCompleter("describe", "create"))
+            .parser(new DefaultParser())
+            .build();
+    while (true) {
+      String line = reader.readLine("> ");
+      if (line == null || line.equalsIgnoreCase("exit")) {
+        break;
+      }
+      reader.getHistory().add(line);
+      if (line.equalsIgnoreCase("describe")) {
+        Path path = Paths.get(".");
+        System.out.println(getDirectoryHierarchy(path));
+      } else if (line.equalsIgnoreCase("create")) {
+        createCommand();
+        /*String choice = reader.readLine("What kind of project do you want to create? (java, javascript, python) ");
+        if (choice.equalsIgnoreCase("java")) {
+          createJavaProject(reader);
+        } else if (choice.equalsIgnoreCase("javascript")) {
+          System.out.println("TBD");
+        } else if (choice.equalsIgnoreCase("python")) {
+          System.out.println("TBD");
+        } else {
+          System.out.println("Unsupported choice: " + choice);
+        }*/
+      } else {
+        System.out.println("Unknown command: " + line);
+      }
+    }
+  }
+  public static void createCommand() { 
+     AnsiConsole.systemInstall();
+System.out.println(ansi().render("@|red,italic Hello|@ @|green World|@\n@|reset Welcome to the project creator.|@"));
+
+    try {
+      ConsolePrompt prompt = new ConsolePrompt();
+      PromptBuilder promptBuilder = prompt.getPromptBuilder();
+
+      promptBuilder.createListPrompt()
+              .name("projectType")
+              .message("What kind of project do you want to create? (java, javascript, python) ")
+              .newItem().text("java").add()  // without name (name defaults to text)
+              .newItem("javascript").text("javascript").add()
+              .newItem("python").text("python").add()
+              .addPrompt();
+
+      HashMap<String, ? extends PromtResultItemIF> result = prompt.prompt(promptBuilder.build());
+      String projectType = ((de.codeshelf.consoleui.prompt.ListResult)result.get("projectType")).getSelectedId(); 
+      System.out.println("result = " + ((de.codeshelf.consoleui.prompt.ListResult)result.get("projectType")).getSelectedId());
+
+      if (projectType== "java") {
+        System.out.println("Building a Java project.");
+      }
+
+      promptBuilder.createCheckboxPrompt()
+              .name("topping")
+              .message("Please select additional toppings:")
+
+              .newSeparator("standard toppings")
+              .add()
+
+              .newItem().name("cheese").text("Cheese").add()
+              .newItem("bacon").text("Bacon").add()
+              .newItem("onions").text("Onions").disabledText("Sorry. Out of stock.").add()
+
+              .newSeparator().text("special toppings").add()
+
+              .newItem("salami").text("Very hot salami").check().add()
+              .newItem("salmon").text("Smoked Salmon").add()
+
+              .newSeparator("and our speciality...").add()
+
+              .newItem("special").text("Anchovies, and olives").checked(true).add()
+              .addPrompt();
+
+      promptBuilder.createChoicePrompt()
+              .name("payment")
+              .message("How do you want to pay?")
+
+              .newItem().name("cash").message("Cash").key('c').asDefault().add()
+              .newItem("visa").message("Visa Card").key('v').add()
+              .newItem("master").message("Master Card").key('m').add()
+              .newSeparator("online payment").add()
+              .newItem("paypal").message("Paypal").key('p').add()
+              .addPrompt();
+
+      promptBuilder.createConfirmPromp()
+              .name("delivery")
+              .message("Is this pizza for delivery?")
+              .defaultValue(ConfirmChoice.ConfirmationValue.YES)
+              .addPrompt();
+
+      result = prompt.prompt(promptBuilder.build());
+      System.out.println("result = " + result);
+
+      ConfirmResult delivery = (ConfirmResult) result.get("delivery");
+      if (delivery.getConfirmed()== ConfirmChoice.ConfirmationValue.YES) {
+        System.out.println("We will deliver the pizza in 5 minutes");
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    } finally {
+      try {
+        TerminalFactory.get().restore();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  public static String getDirectoryHierarchy(Path path) {
+    StringBuilder sb = new StringBuilder();
+    try (Stream<Path> paths = Files.walk(path)) {
+      paths.sorted()
+          .forEach(
+              p -> {
+                int depth = path.relativize(p).getNameCount();
+                for (int i = 0; i < depth; i++) {
+                  sb.append(" ");
+                }
+                String fileName = p.getFileName().toString();
+                if (p.toFile().isDirectory()) {
+                  fileName = "\033[32m" + "/" + fileName + "\033[0m";
+                } else {
+                  fileName = "\033[34m" + fileName + "\033[0m";
+                }
+                sb.append(fileName).append("\n");
+              });
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return sb.toString();
+  }
+}
+

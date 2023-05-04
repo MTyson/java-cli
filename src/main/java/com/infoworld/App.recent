@@ -1,0 +1,76 @@
+package com.infoworld;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.jline.reader.LineReader;
+import org.jline.reader.Reference;
+import org.jline.reader.impl.DefaultParser;
+import org.jline.reader.impl.LineReaderBuilder;
+import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+
+public class App {
+    public static void main(String[] args) throws Exception {
+
+        List<String> options = new ArrayList<>();
+        options.add("Option 1");
+        options.add("Option 2");
+        options.add("Option 3");
+
+        Terminal terminal = TerminalBuilder.terminal();
+        LineReader reader = LineReader.builder()
+                                      .terminal(terminal)
+                                      .parser(new DefaultParser())
+                                      .completer(new StringsCompleter(options))
+                                      .build();
+
+        int selectionIndex = 0;
+
+        while (true) {
+            // Print the options
+            for (int i = 0; i < options.size(); i++) {
+                String option = options.get(i);
+                if (i == selectionIndex) {
+                    System.out.print("-> ");
+                } else {
+                    System.out.print("   ");
+                }
+                System.out.println(option);
+            }
+
+            // Wait for user input
+            Reference ref = reader.readCharacter().getReference();
+
+            // Process user input
+            if (ref == Reference.UP) {
+                selectionIndex--;
+                if (selectionIndex < 0) {
+                    selectionIndex = options.size() - 1;
+                }
+            } else if (ref == Reference.DOWN) {
+                selectionIndex++;
+                if (selectionIndex >= options.size()) {
+                    selectionIndex = 0;
+                }
+            } else if (ref == Reference.BACKSPACE || ref == Reference.DELETE) {
+                // Delete the currently selected option
+                options.remove(selectionIndex);
+                selectionIndex--;
+                if (selectionIndex < 0 && options.size() > 0) {
+                    selectionIndex = 0;
+                }
+            } else if (ref == Reference.ENTER) {
+                // The user has made their selection
+                break;
+            }
+        }
+
+        // Print the final selection
+        String selection = options.get(selectionIndex);
+        System.out.println("Selection: " + selection);
+
+        terminal.close();
+    }
+}
+

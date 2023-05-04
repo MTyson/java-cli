@@ -1,0 +1,128 @@
+package com.infoworld;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+
+import org.jline.builtins.Completers;
+import org.jline.reader.*;
+import org.jline.reader.impl.*;
+import org.jline.reader.impl.completer.*;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import java.util.stream.Stream;
+
+public class App {
+
+  public static void main(String[] args) throws IOException {
+    Terminal terminal = TerminalBuilder.terminal();
+    LineReader reader =
+        LineReaderBuilder.builder()
+            .terminal(terminal)
+            .completer(new StringsCompleter("describe", "create"))
+            .parser(new DefaultParser())
+            .build();
+    while (true) {
+      String line = reader.readLine("> ");
+      if (line == null || line.equalsIgnoreCase("exit")) {
+        break;
+      }
+      reader.getHistory().add(line);
+      if (line.equalsIgnoreCase("describe")) {
+        Path path = Paths.get(".");
+        System.out.println(getDirectoryHierarchy(path));
+      } else if (line.equalsIgnoreCase("create")) {
+        create(reader);
+      } else {
+        System.out.println("Unknown command: " + line);
+      }
+    }
+  }
+  public static void create(LineReader reader) throws IOException {
+    Function<String, Completer> completer =
+        arg -> new StringsCompleter("Java", "JavaScript", "Python");
+    //reader.setCompleter(completer.apply("Choose a project type: Java, JavaScript, Python"));
+    reader.setCompleter(new ArgumentCompleter(new StringsCompleter("Java", "JavaScript", "Python")));
+    String projectType = reader.readLine("> ");
+    List<String> features = new ArrayList<>();
+    if (projectType.equalsIgnoreCase("Java")) {
+      reader.setCompleter(completer.apply("Choose a database: MySQL, PostgreSQL, MongoDB"));
+      String database = reader.readLine("> ");
+      features.add("Database: " + database);
+      reader.setCompleter(completer.apply("Choose an API: REST, SOAP"));
+      String api = reader.readLine("> ");
+      features.add("API: " + api);
+    }
+    System.out.println("Project created:");
+    System.out.printf("Type: %s%n", projectType);
+    if (features.size() > 0) {
+      System.out.println("Features: ");
+      features.forEach(System.out::println);
+    }
+  }
+
+  public static void createProject2(LineReader reader) throws IOException { 
+    System.out.println("BEGIN createProject()");
+    Function<String, Completer> completer =
+        arg -> new StringsCompleter("Java", "JavaScript", "Python");
+    System.out.println("A");
+
+    String projectType = reader.readLine("Choose a project type: Java, JavaScript, Python");
+    //        readLineWithCompleter(completer.apply("Choose a project type: Java, JavaScript, Python"));
+    System.out.println("B");
+    List<String> features = new ArrayList<>();
+    if (projectType.equalsIgnoreCase("Java")) {
+      System.out.println("Java project");
+      String database = readLineWithCompleter(completer.apply("Choose a database: MySQL, PostgreSQL, MongoDB"));
+      features.add("Database: " + database);
+      String api = readLineWithCompleter(completer.apply("Choose an API: REST, SOAP"));
+      features.add("API: " + api);
+    }
+
+    System.out.println("Project created:");
+    System.out.printf("Type: %s%n", projectType);
+    if (features.size() > 0) {
+      System.out.println("Features: ");
+      features.forEach(System.out::println);
+    }
+  }
+
+  public static String getDirectoryHierarchy(Path path) {
+    StringBuilder sb = new StringBuilder();
+    try (Stream<Path> paths = Files.walk(path)) {
+      paths.sorted()
+          .forEach(
+              p -> {
+                int depth = path.relativize(p).getNameCount();
+                for (int i = 0; i < depth; i++) {
+                  sb.append(" ");
+                }
+                String fileName = p.getFileName().toString();
+                if (p.toFile().isDirectory()) {
+                  fileName = "\033[32m" + "/" + fileName + "\033[0m";
+                } else {
+                  fileName = "\033[34m" + fileName + "\033[0m";
+                }
+                sb.append(fileName).append("\n");
+              });
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return sb.toString();
+  }
+
+  public static String readLineWithCompleter(Completer completer) throws IOException {
+    LineReader reader = LineReaderBuilder.builder().completer(completer).build();
+    return reader.readLine("> ");
+  }
+  public static String readLine(String prompt) throws IOException {
+    Terminal terminal = TerminalBuilder.terminal();
+    LineReader reader = LineReaderBuilder.builder().terminal(terminal).build();
+    return reader.readLine(prompt + " ");
+}
+
+}
+

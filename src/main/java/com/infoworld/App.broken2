@@ -1,0 +1,82 @@
+import de.codeshelf.consoleui.elements.ConfirmChoice;
+import de.codeshelf.consoleui.prompt.ConfirmResult;
+import de.codeshelf.consoleui.prompt.ConsolePrompt;
+import de.codeshelf.consoleui.prompt.PromtResultItemIF;
+import de.codeshelf.consoleui.prompt.builder.PromptBuilder;
+import jline.TerminalFactory;
+import jline.console.completer.StringsCompleter;
+import org.fusesource.jansi.AnsiConsole;
+
+import java.io.IOException;
+import java.util.HashMap;
+
+import static org.fusesource.jansi.Ansi.ansi;
+
+public class App {
+  public static void main(String[] args) throws IOException {
+    AnsiConsole.systemInstall();
+    ConsolePrompt prompt = new ConsolePrompt();
+    PromptBuilder promptBuilder = prompt.getPromptBuilder();
+  
+    String[] projectTypes = new String[]{"Java", "JavaScript", "Python"};
+    promptBuilder.createChoicePrompt()
+        .name("projectType")
+        .message("Select project type")
+        //.addCompleter(new StringsCompleter(projectTypes))
+        .newItem("Java").add()
+        .newItem("JavaScript").add()
+        .newItem("Python").add()
+        .addPrompt();
+  
+    HashMap<String, ? extends PromtResultItemIF> result = prompt.prompt(promptBuilder.build());
+    String projectType = ((String)result.get("projectType").getValue()).toLowerCase();
+  
+    switch (projectType) {
+      case "java":
+        createJavaProject(prompt);
+        break;
+      case "javascript":
+        System.out.println("TBD");
+        break;
+      case "python":
+        System.out.println("TBD");
+        break;
+      default:
+        System.out.println("Unsupported choice: " + projectType);
+        break;
+    }
+  }
+  
+  private static void createJavaProject(ConsolePrompt prompt) {
+    PromptBuilder promptBuilder = prompt.getPromptBuilder();
+  
+    String projectName = promptBuilder
+        .createInputPrompt()
+        .name("projectName")
+        .message("Enter project name")
+        .addPrompt()
+        .ask()
+        .get().getValue().toString();
+  
+    boolean addDatabase = promptBuilder
+        .createConfirmPromp()
+        .name("addDatabase")
+        .message("Add Database Support?")
+        .defaultValue(ConfirmChoice.ConfirmationValue.NO)
+        .addPrompt()
+        .ask()
+        .get().getValue() == ConfirmChoice.ConfirmationValue.YES;
+  
+    boolean addRest = promptBuilder
+        .createConfirmPromp()
+        .name("addRest")
+        .message("Add REST API?")
+        .defaultValue(ConfirmChoice.ConfirmationValue.NO)
+        .addPrompt()
+        .ask()
+        .get().getValue() == ConfirmChoice.ConfirmationValue.YES;
+  
+    System.out.println("Creating Java project " + projectName + " with Database: " + addDatabase + ", REST: " + addRest);
+  }
+}
+

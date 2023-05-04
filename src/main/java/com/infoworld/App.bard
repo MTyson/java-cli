@@ -1,0 +1,87 @@
+package com.infoworld;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+
+public class App {
+
+    private List<MenuItem> menuItems;
+
+    public App() {
+	            menuItems = new ArrayList<>();
+        menuItems.add(new MenuItem("Option 1", () -> {
+            System.out.println("Option 1 selected");
+        }));
+        menuItems.add(new MenuItem("Option 2", () -> {
+            System.out.println("Option 2 selected");
+        }));
+        menuItems.add(new MenuItem("Option 3", () -> {
+            System.out.println("Option 3 selected");
+        }));
+    }
+
+    public void display() throws Exception {
+        Terminal terminal = TerminalBuilder.builder().build();
+
+        LineReader reader = LineReaderBuilder.builder().terminal(terminal).build();
+
+        int selection = -1;
+        while (selection != 0) {
+            terminal.writer().println("Please select an option:");
+            for (int i = 0; i < menuItems.size(); i++) {
+                terminal.writer().printf("%d. %s\n", i + 1, menuItems.get(i).getLabel());
+            }
+
+            selection = Integer.parseInt(reader.readLine()) - 1;
+            if (selection < 0 || selection >= menuItems.size()) {
+                terminal.writer().println("Invalid selection.");
+            } else {
+                menuItems.get(selection).execute();
+            }
+        }
+
+        terminal.writer().println("Goodbye!");
+        terminal.close();
+    }
+
+    public static void main(String[] args) throws Exception {
+        App menu = new App();
+        menu.display();
+    }
+}
+
+class MenuItem {
+
+    private String label;
+    private Runnable execute;
+
+    public MenuItem(String label, Runnable execute) {
+        this.label = label;
+        this.execute = execute;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public Runnable getExecute() {
+        return execute;
+    }
+
+    public void setExecute(Runnable execute) {
+        this.execute = execute;
+    }
+
+    public void execute() {
+        System.out.println(label + " selected");
+    }
+}

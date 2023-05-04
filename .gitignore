@@ -1,0 +1,8 @@
+# Ignore compiled class files
+*.class
+
+# Ignore IDE files
+.idea
+
+# Ignore Maven output
+target/
